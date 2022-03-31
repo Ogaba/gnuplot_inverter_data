@@ -23,7 +23,7 @@ VERSION=1.0.0
 _DATE=`date +%Y%m%d`
 
 # Secret stored in a .gitignore file
-_TOKEN=`cat openweathermap.token`
+_TOKEN=`cat ~/developpement/meteo/openweathermap.token`
 
 # Collect open meteo data from openweathermap.org every 10 minutes (see crontab)
 # Note : lat and lon are for my house
