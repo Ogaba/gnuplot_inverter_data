@@ -25,18 +25,14 @@ VERSION=1.1.1
 export PATH=/opt/freeware/bin:$PATH
 
 _NIVEAU_TRACE=1
-f_check_params $#
-_DATE="$1"
+_DATE="$2"
 
 # Gnuplot Data
 _TMP=~/tmp/$0.tmp.$$
-_TMPDATA=~/tmp/$0.tmpcsv.$$
+_TMPDATA=~/tmp/$0.tmpdata.$$
 
-[ -f csv/all.csv ] && grep -h "$_DATE" csv/all.csv > $_TMPDATA
-if [ ! -s "$_TMPDATA" ]; then
-	rm -f $_TMPDATA
-	exit 0
-fi
+grep -h "$_DATE" csv/"$1".csv > $_TMPDATA
+[ ! -s "$_TMPDATA" ] && exit 1
 
 f_trace 2 "Begining $0 for day $_DATE :"
 _FICPNG=gnuplot/${_DATE}.png
@@ -69,13 +65,15 @@ f_set_y2tics
 f_set_key right
 f_set_y2label Ampères
 
-echo "plot \"$_TMPDATA\" u 1:7 w boxes axis x1y1 t \"Output active power\" ls 19, \"$_TMPDATA\" u 1:5 w boxes axis x1y1 t \"PV input power\" ls 5, \"$_TMPDATA\" u 1:11 w boxes axis x1y2 t \"Battery discharge current\" ls 11, \"$_TMPDATA\" u 1:10 w boxes axis x1y2 t \"Battery charge current\" ls 10" >> $_TMP
+echo "plot \"$_TMPDATA\" u 2:8 w boxes axis x1y1 t \"Output active power\" ls 19, \"$_TMPDATA\" u 2:6 w boxes axis x1y1 t \"PV input power\" ls 5, \"$_TMPDATA\" u 2:12 w boxes axis x1y2 t \"Battery discharge current\" ls 11, \"$_TMPDATA\" u 2:11 w boxes axis x1y2 t \"Battery charge current\" ls 10" >> $_TMP
 
 f_trace 2 " adding ${_DATE} from ${_TMPDATA} ..."
 f_trace 2 " generating ${_FICPNG} ..."
 echo "EOF" >> $_TMP
 chmod u+x $_TMP
 $_TMP > ${_FICPNG}
+
+# Purge
 rm $_TMP $_TMPDATA 2>/dev/null
 
 # End

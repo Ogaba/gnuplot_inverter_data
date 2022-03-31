@@ -25,20 +25,16 @@ VERSION=1.1.1
 export PATH=/opt/freeware/bin:$PATH
 
 _NIVEAU_TRACE=1
-f_check_params $#
-_DATE="$1"
+_DATE="$2"
 
 # Temporary Data
 _TMP=~/tmp/$0.tmp.$$
-_TMPDATA=~/tmp/$0.tmpcsv.$$
+_TMPDATA=~/tmp/$0.tmpdata.$$
 _TMPDATA2=~/tmp/$0.tmpenedis.$$
 
 # Inverter
-[ -f csv/all.csv ] && grep -h "$_DATE" csv/all.csv > $_TMPDATA
-if [ ! -s "$_TMPDATA" ]; then
-	rm -f $_TMPDATA
-	exit 0
-fi
+grep -h "$_DATE" csv/"$1".csv > $_TMPDATA
+[ ! -s "$_TMPDATA" ] && exit 1
 
 # Enedis
 _DATE2=`echo "${_DATE}" | xargs date "+%d/%m/%Y" -d`
@@ -49,10 +45,12 @@ if [ -f csv/enedis.csv ]; then
 	      awk -v date=\"$_DATE\" '{ print date \" \" \$0 }' |\
 	      sed 's/;/,/g'"
 	eval "$_CMD" 2>/dev/null | grep -v "$_DATE2" | sort -k1 -u > $_TMPDATA2
+else
+	echo "csv/enedis.csv not found !"; exit 1
 fi
 if [ ! -s "$_TMPDATA2" ]; then
 	rm -f $_TMPDATA2
-	exit 0
+	exit 1
 fi
 
 f_trace 2 "Begining $0 For day $_DATE :"
@@ -81,13 +79,15 @@ f_set_ytics
 f_set_key left
 f_set_ylabel Watts  
 
-echo "plot \"$_TMPDATA\" u 1:7 w boxes axis x1y1 t \"Output active power\" ls 19, \"$_TMPDATA2\" u 1:2 w boxes axis x1y1 t \"Enedis active power\" ls 2" >> $_TMP
+echo "plot \"$_TMPDATA\" u 2:8 w boxes axis x1y1 t \"Output active power\" ls 19, \"$_TMPDATA2\" u 1:2 w boxes axis x1y1 t \"Enedis active power\" ls 2" >> $_TMP
 
 f_trace 2 " adding ${_DATE} from ${_TMPDATA} and ${_TMPDATA2}..."
 f_trace 2 " generating ${_FICPNG} ..."
 printf "\nEOF" >> $_TMP
 chmod u+x $_TMP
 $_TMP > ${_FICPNG}
+
+# Purge
 rm $_TMP $_TMPDATA $_TMPDATA2 2>/dev/null
 
 # End

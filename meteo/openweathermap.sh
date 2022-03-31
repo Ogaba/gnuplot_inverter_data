@@ -15,13 +15,15 @@
 #**************************************************************************h *#
 
 # Main
-[ `which jq` ] || sudo apt  install jq
 
 # Version
 VERSION=1.0.0
 
 # Current day
-_DATE=`date +%Y-%m-%d`
+_DATE=`date +%Y%m%d`
 
-# lat and lon are for house
-curl "https://api.openweathermap.org/data/2.5/onecall?lat=50.649923&lon=3.129666&timezone=Europe/Paris&appid=73a8086daf03642a83158b947745277d&units=metric" | jq >> ~/developpement/meteo/${_DATE}_maison_villeneuve
+# Collect open meteo data from openweathermap.org every 10 minutes (see crontab)
+# Note : lat and lon are for my house
+curl "https://api.openweathermap.org/data/2.5/weather?lat=50.649923&lon=3.129666&timezone=Europe/Paris&appid=73a8086daf03642a83158b947745277d&units=metric&lang=fr" >> ~/developpement/meteo/data/${_DATE}_maison_villeneuve.json
+# Add UNIX return cariage
+echo "" >> ~/developpement/meteo/data/${_DATE}_maison_villeneuve.json

@@ -27,9 +27,9 @@ if [ $1 -le $_NIVEAU_TRACE ]; then
 fi
 }
 
-f_check_params()
+f_check_params_go()
 {
-[ ! "$1" -eq 1 ] && f_trace 1 "Please give month of current year." && exit 1
+[ ! "$1" -eq 1 ] && f_trace 1 "Please give {MONTH} of current year." && exit 1
 }
 
 # Common GnuPlot Functions

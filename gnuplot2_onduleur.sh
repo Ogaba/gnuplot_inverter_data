@@ -25,18 +25,14 @@ VERSION=1.1.1
 export PATH=/opt/freeware/bin:$PATH
 
 _NIVEAU_TRACE=1
-f_check_params $#
-_DATE="$1"
+_DATE="$2"
 
 # Gnuplot Data
 _TMP=~/tmp/$0.tmp.$$
-_TMPDATA=~/tmp/$0.tmpcsv.$$
+_TMPDATA=~/tmp/$0.tmpdata.$$
 
-[ -f csv/all.csv ] && grep -h "$_DATE" csv/all.csv > $_TMPDATA
-if [ ! -s "$_TMPDATA" ]; then
-	rm -f $_TMPDATA
-	exit 0
-fi
+grep -h "$_DATE" csv/"$1".csv > $_TMPDATA
+[ ! -s "$_TMPDATA" ] && exit 1
 
 f_trace 2 "Begining $0 for day $_DATE :"
 _FICPNG=gnuplot/${_DATE}.volts.png
@@ -59,18 +55,20 @@ f_set_format_x
 f_set_tics_scale 3
 f_set_grid
 
-f_set_yrange 47 58.5
+f_set_yrange 46 58.5
 f_set_ytics
 f_set_key left
 f_set_ylabel Volts
 
-echo "plot \"$_TMPDATA\" u 1:8 w line axis x1y1 t \"Batterie Voltage\" ls 8" >> $_TMP
+echo "plot \"$_TMPDATA\" u 2:9 w line axis x1y1 t \"Batterie Voltage\" ls 8" >> $_TMP
 
 f_trace 2 " adding ${_DATE} from ${_TMPDATA} ..."
 f_trace 2 " generating ${_FICPNG} ..."
 echo "EOF" >> $_TMP
 chmod u+x $_TMP
 $_TMP > ${_FICPNG}
+
+# Purge
 rm $_TMP $_TMPDATA 2>/dev/null
 
 # End

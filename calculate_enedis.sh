@@ -24,7 +24,6 @@ VERSION=1.0.0
 _TMP=~/tmp/$0.tmp.$$
 
 _NIVEAU_TRACE=1
-f_check_params $#
 _DATE="$1"
 
 _DATE2=`echo "${_DATE}" | xargs date "+%d/%m/%Y" -d`
@@ -35,16 +34,15 @@ if [ -f csv/enedis.csv ]; then
 	      awk '/${_DATE3};;/ { print \$0 }' RS=''"
 	eval "$_CMD" 2>/dev/null | grep -v "$_DATE2" | sort -k1 -u > $_TMP
 fi
-if [ ! -s "$_TMP" ]; then
-	rm -f $_TMP
-	exit 0
-fi
+
+[ ! -s "$_TMP" ] && exit 1
 
 f_trace 2 "Begining $0 for day $_DATE :"
 
 _WE=`awk -F';' '{ print $2 }' $_TMP | tr '\n' '+' | sed -e 's/^+//' -e 's/+$//' | xargs echo | bc -l`
 echo -en "\tWatts total consumed from grid\t : "; echo "$_WE / 2" | bc
 
+# Purge
 rm $_TMP 2>/dev/null
 
 # End

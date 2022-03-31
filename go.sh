@@ -24,24 +24,25 @@ VERSION=1.0.0
 [ ! `which ssconvert` ] && sudo apt install gnumeric
 
 _NIVEAU_TRACE=1
-f_check_params $#
+f_check_params_go $#
 
 f_trace 2 "Begining $0"
 _MONTH="$1"
 _YEAR=`date +%Y`
 _YM="${_YEAR}-${_MONTH}"
+_YM2="${_YEAR}${_MONTH}"
 
-# Data from inverter
+# Convert XLS data from inverter to CSV
 cd data && find . -name "*.xls" > conversion.txt; cd - 1>/dev/null
 while IFS= read -r "f" ; do
 	filename="${f%.*}"
 	if [ ! -f "csv/${filename}.csv" ]; then
-		ssconvert -v data/"${filename}".xls csv/"${filename}".csv
-		cat csv/"${filename}".csv | cut -d',' -f2- | sponge csv/"${filename}".csv
+		ssconvert -v data/${filename}.xls csv/${filename}.csv
+		grep -h "$_YM" csv/"${filename}".csv >> csv/${_YM2}.csv
+		rm csv/${filename}.csv
 	fi
 done < data/conversion.txt
-rm csv/all.csv 2>/dev/null
-sort -k1 -u csv/${_YEAR}${_MONTH}*.csv > csv/all.csv
+sort -k2 -u csv/${_YM2}.csv | sponge csv/${_YM2}.csv
 
 # Data from Enedis
 cat data/mes-puissances-atteintes-30min-*.csv > csv/enedis.csv
@@ -49,21 +50,27 @@ cat data/mes-puissances-atteintes-30min-*.csv > csv/enedis.csv
 _ICONV_FROM=`file -i -b csv/enedis.csv | awk -F'charset=' '{ print $2 }'`
 iconv -f $_ICONV_FROM -t ASCII//TRANSLIT csv/enedis.csv | sponge csv/enedis.csv
 
-# Compute and plot
+# Compute and plot except for current day (we don't have all data for current day)
 _DAY=${_YM}-01
 _DAYE=${_YM}-31
+_CURDAY=`date +%Y%m%d`
 while [ ${_DAY//-/$''} -le ${_DAYE//-/$''} ]; do
-	echo "Day $_DAY :" 
-	./calculate_onduleur.sh $_DAY
-	./calculate_enedis.sh $_DAY
-	./gnuplot_onduleur.sh $_DAY &
-	./gnuplot_onduleur_enedis.sh $_DAY &
-	./gnuplot2_onduleur.sh $_DAY &
-	./gnuplot3_onduleur.sh $_DAY &
-	./gnuplot4_onduleur.sh $_DAY &
+	if [ "${_DAY//-/$''}" -ne "$_CURDAY" ]; then
+		echo "Day $_DAY :" 
+		./calculate_onduleur.sh $_YM2 $_DAY
+		./calculate_enedis.sh $_DAY
+		./gnuplot_onduleur.sh $_YM2 $_DAY &
+		./gnuplot_onduleur_enedis.sh $_YM2 $_DAY &
+		./gnuplot2_onduleur.sh $_YM2 $_DAY &
+		./gnuplot3_onduleur.sh $_YM2 $_DAY &
+		./gnuplot4_onduleur.sh $_YM2 $_DAY &
+		#./gnuplot_meteo.sh $_DAY &
+		#./gnuplot_soleil_meteo.sh $_DAY &
+	else
+		echo "Day $_DAY not finished."
+	fi
 	_DAY=`date -I -d "$_DAY + 1 day"`
 done
 wait
 
 # Purge
-rm -f csv/all.csv 2>/dev/null
