@@ -4,7 +4,7 @@
 #
 # Author...... : Olivier Gabathuler
 # Created..... : 2022-03-14 OGA V1.0.0
-# Modified.... : 
+# Modified.... : 2022-04-01 OGA V1.1.0
 # Notes....... :
 #
 # Miscellaneous.
@@ -18,7 +18,7 @@
 # Main
 
 # Version
-VERSION=1.0.0
+VERSION=1.1.0
 
 [ ! `which sponge` ]	&& sudo apt install moreutils
 [ ! `which ssconvert` ] && sudo apt install gnumeric
@@ -33,14 +33,14 @@ _YM="${_YEAR}-${_MONTH}"
 _YM2="${_YEAR}${_MONTH}"
 
 # Convert XLS data from inverter to CSV
+echo "Conversion des fichiers xls issus de PowerWatch :"
 cd data && find . -name "*.xls" > conversion.txt; cd - 1>/dev/null
 while IFS= read -r "f" ; do
 	filename="${f%.*}"
-	if [ ! -f "csv/${filename}.csv" ]; then
-		ssconvert -v data/${filename}.xls csv/${filename}.csv
-		grep -h "$_YM" csv/"${filename}".csv >> csv/${_YM2}.csv
-		rm csv/${filename}.csv
-	fi
+	ssconvert -v data/${filename}.xls csv/${filename}.csv
+	[ $? -eq 0 ] && grep -h "$_YM" csv/"${filename}".csv >> csv/${_YM2}.csv || echo "Erreur de génération de csv/${_YM2}.csv !"
+	[ $? -eq 0 ] && rm csv/${filename}.csv || echo "Erreur de recherche de $_YM dans csv/${filename}.csv !"
+	[ $? -eq 0 ] && rm data/${filename}.xls || echo "Erreur de suppression de data/${filename}.xls !"
 done < data/conversion.txt
 sort -k2 -u csv/${_YM2}.csv | sponge csv/${_YM2}.csv
 
