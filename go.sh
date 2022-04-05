@@ -13,6 +13,7 @@
 # - Exit codes EXIT_xxxx are for internal use (see below).
 #
 #**************************************************************************h *#
+# Specific Gnuplot functions
 . ./fonctions.sh
 
 # Main
@@ -20,6 +21,7 @@
 # Version
 VERSION=1.1.0
 
+[ ! `which pcregrep` ]	&& sudo apt install pcregrep
 [ ! `which sponge` ]	&& sudo apt install moreutils
 [ ! `which ssconvert` ] && sudo apt install gnumeric
 
@@ -34,15 +36,18 @@ _YM2="${_YEAR}${_MONTH}"
 
 # Convert XLS data from inverter to CSV
 echo "Conversion des fichiers xls issus de PowerWatch :"
-cd data && find . -name "*.xls" > conversion.txt; cd - 1>/dev/null
-while IFS= read -r "f" ; do
-	filename="${f%.*}"
-	ssconvert -v data/${filename}.xls csv/${filename}.csv
-	[ $? -eq 0 ] && grep -h "$_YM" csv/"${filename}".csv >> csv/${_YM2}.csv || echo "Erreur de génération de csv/${_YM2}.csv !"
-	[ $? -eq 0 ] && rm csv/${filename}.csv || echo "Erreur de recherche de $_YM dans csv/${filename}.csv !"
-	[ $? -eq 0 ] && rm data/${filename}.xls || echo "Erreur de suppression de data/${filename}.xls !"
+cd data && find . -name "${_YM2}*.xls" > conversion.txt; cd - 1>/dev/null
+while IFS= read -r "_F" ; do
+	_FILE="${_F%.*}"
+	ssconvert -v data/${_FILE}.xls csv/${_FILE}.csv
+	pcregrep -o "(20[2-9][0-9]\-[0-1][0-9])" csv/${_FILE}.csv | uniq | while read _YYYYMM; do
+		_YYYYMM2=`echo $_YYYYMM | tr -d '-'`
+		grep -h "$_YYYYMM" csv/"${_FILE}".csv >> csv/${_YYYYMM2}.csv || echo "Erreur de génération de csv/${_YYYYMM2}.csv !"
+	done
+	[ $? -eq 0 ] && rm csv/${_FILE}.csv || echo "Erreur de suppression de csv/${_FILE}.csv !"
+	[ $? -eq 0 ] && rm data/${_FILE}.xls || echo "Erreur de suppression de data/${_FILE}.xls !"
 done < data/conversion.txt
-sort -k2 -u csv/${_YM2}.csv | sponge csv/${_YM2}.csv
+[ -f csv/${_YM2}.csv ] && sort -k2 -u csv/${_YM2}.csv | sponge csv/${_YM2}.csv
 
 # Data from Enedis
 cat data/mes-puissances-atteintes-30min-*.csv > csv/enedis.csv
@@ -61,11 +66,8 @@ while [ ${_DAY//-/$''} -le ${_DAYE//-/$''} ]; do
 		./calculate_enedis.sh $_DAY
 		./gnuplot_onduleur.sh $_YM2 $_DAY &
 		./gnuplot_onduleur_enedis.sh $_YM2 $_DAY &
-		./gnuplot2_onduleur.sh $_YM2 $_DAY &
-		./gnuplot3_onduleur.sh $_YM2 $_DAY &
-		./gnuplot4_onduleur.sh $_YM2 $_DAY &
-		#./gnuplot_meteo.sh $_DAY &
-		#./gnuplot_soleil_meteo.sh $_DAY &
+		./gnuplot_meteo.sh $_DAY &
+		./gnuplot_soleil_meteo.sh $_DAY &
 	else
 		echo "Day $_DAY not finished."
 	fi

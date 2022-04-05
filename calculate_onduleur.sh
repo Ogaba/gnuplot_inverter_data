@@ -13,6 +13,7 @@
 # - Exit codes EXIT_xxxx are for internal use (see below).
 #
 #**************************************************************************h *#
+# Specific GnuPlot functions
 . ./fonctions.sh
 
 # Main

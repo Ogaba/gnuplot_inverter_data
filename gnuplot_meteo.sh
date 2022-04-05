@@ -13,16 +13,13 @@
 # - Exit codes EXIT_xxxx are for internal use (see below).
 #
 #**************************************************************************h *#
-# Fonctions communes GnuPlot
+# Specific GnuPlot functions
 . ./fonctions.sh
 
 # Main
 
 # Version
 VERSION=1.1.1
-
-# Need GNU Path
-export PATH=/opt/freeware/bin:$PATH
 
 _NIVEAU_TRACE=1
 _DATE="$1"

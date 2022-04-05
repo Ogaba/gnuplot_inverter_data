@@ -4,7 +4,7 @@
 #
 # Author...... : Olivier Gabathuler
 # Created..... : 2009-09-16 OGA V1.0.0
-# Modified.... : 2022-03-06 OGA V1.1.1
+# Modified.... : 2022-04-05 OGA V1.2.0
 # Notes....... :
 #
 # Miscellaneous.
@@ -13,16 +13,32 @@
 # - Exit codes EXIT_xxxx are for internal use (see below).
 #
 #**************************************************************************h *#
-# Fonctions communes GnuPlot
+# Specific GnuPlot functions
 . ./fonctions.sh
+
+# Common plotting function
+f_set_common () {
+	f_set_terminal_png 5000 2600
+	f_set_margins
+	f_set_transparency_colors
+	f_set_styleline 2
+
+	f_set_multiplot
+	f_set_title "Données issues de l'Onduleur PIP8048MAX"
+	f_set_xlabel "journée du $_DATE"
+	f_set_datafile_sep ","
+
+	f_set_xdata_time
+	f_set_timefmt
+	f_set_format_x
+	f_set_tics_scale 3
+	f_set_grid
+}
 
 # Main
 
 # Version
-VERSION=1.1.1
-
-# Need GNU Path
-export PATH=/opt/freeware/bin:$PATH
+VERSION=1.2.0
 
 _NIVEAU_TRACE=1
 _DATE="$2"
@@ -48,31 +64,14 @@ if [ -f csv/enedis.csv ]; then
 else
 	echo "csv/enedis.csv not found !"; exit 1
 fi
-if [ ! -s "$_TMPDATA2" ]; then
-	rm -f $_TMPDATA2
-	exit 1
-fi
+[ ! -s "$_TMPDATA2" ] && rm -f $_TMPDATA2 && exit 1
 
 f_trace 2 "Begining $0 For day $_DATE :"
 _FICPNG=gnuplot/${_DATE}.enedis.png
 
 # Generate Plot if data exists
 >$_TMP
-f_set_terminal_png 5000 2600
-f_set_margins
-f_set_transparency_colors
-f_set_styleline 2
-
-f_set_multiplot
-f_set_title "Données issues de l'Onduleur PIP8048MAX"
-f_set_xlabel "journée du $_DATE"
-f_set_datafile_sep ","
-
-f_set_xdata_time
-f_set_timefmt
-f_set_format_x
-f_set_tics_scale 3
-f_set_grid
+f_set_common
 
 f_set_yrange 0 5000
 f_set_ytics
@@ -83,7 +82,7 @@ echo "plot \"$_TMPDATA\" u 2:8 w boxes axis x1y1 t \"Output active power\" ls 19
 
 f_trace 2 " adding ${_DATE} from ${_TMPDATA} and ${_TMPDATA2}..."
 f_trace 2 " generating ${_FICPNG} ..."
-printf "\nEOF" >> $_TMP
+echo "EOF" >> $_TMP
 chmod u+x $_TMP
 $_TMP > ${_FICPNG}
 
