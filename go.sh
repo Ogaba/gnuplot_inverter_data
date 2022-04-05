@@ -35,7 +35,7 @@ _YM="${_YEAR}-${_MONTH}"
 _YM2="${_YEAR}${_MONTH}"
 
 # Convert XLS data from inverter to CSV
-echo "Conversion des fichiers xls issus de PowerWatch :"
+echo "Conversion des fichiers xls issus de PowerWatch en csv :"
 cd data && find . -name "${_YM2}*.xls" > conversion.txt; cd - 1>/dev/null
 while IFS= read -r "_F" ; do
 	_FILE="${_F%.*}"
@@ -50,12 +50,14 @@ done < data/conversion.txt
 [ -f csv/${_YM2}.csv ] && sort -k2 -u csv/${_YM2}.csv | sponge csv/${_YM2}.csv
 
 # Data from Enedis
+echo "Conversion des fichiers csv UTF-8 issus d'Enedis en csv ASCII :"
 cat data/mes-puissances-atteintes-30min-*.csv > csv/enedis.csv
 # Conversion en ASCII
 _ICONV_FROM=`file -i -b csv/enedis.csv | awk -F'charset=' '{ print $2 }'`
 iconv -f $_ICONV_FROM -t ASCII//TRANSLIT csv/enedis.csv | sponge csv/enedis.csv
 
 # Compute and plot except for current day (we don't have all data for current day)
+echo "Calcul et construction des graphiques sauf pour le jour courant :"
 _DAY=${_YM}-01
 _DAYE=${_YM}-31
 _CURDAY=`date +%Y%m%d`
