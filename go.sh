@@ -52,6 +52,7 @@ cat data/mes-puissances-atteintes-30min-*.csv > csv/enedis.csv
 _ICONV_FROM=`file -i -b csv/enedis.csv | awk -F'charset=' '{ print $2 }'`
 iconv -f $_ICONV_FROM -t ASCII//TRANSLIT csv/enedis.csv | sponge csv/enedis.csv
 
+sort -u csv/compute | sponge csv/compute
 cat csv/compute | while read _YYYYMM; do
 	# Sort uniq data
 	sort -k2 -u csv/"$_YYYYMM".csv | sponge csv/"$_YYYYMM".csv
