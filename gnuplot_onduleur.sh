@@ -89,7 +89,12 @@ f_set_ytics
 f_set_key left
 f_set_ylabel Volts
 
-echo "plot \"$_TMPDATA\" u 2:9 w line axis x1y1 t \"Batterie Voltage\" ls 8" >> $_TMP
+f_set_y2range 0 500
+f_set_y2tics
+f_set_key right
+f_set_y2label Volts
+
+echo "plot \"$_TMPDATA\" u 2:9 w line axis x1y1 t \"Batterie Voltage\" ls 8, \"$_TMPDATA\" u 2:5 w line axis x1y2 t \"PV voltage\" ls 3" >> $_TMP
 
 f_trace 2 " adding ${_DATE} from ${_TMPDATA} ..."
 f_trace 2 " generating ${_FICPNG} ..."
