@@ -22,14 +22,15 @@
 VERSION=1.1.1
 
 _NIVEAU_TRACE=1
-_DATE="$1"
+_DATE="$2"
 
 # Gnuplot Data
 _TMP=~/tmp/$0.tmp.$$
 _TMPDATA=~/tmp/$0.tmpdata.$$
 _DATA=meteo/csv/${_DATE//-/$''}_maison_villeneuve.csv
+[ ! -s "$_DATA" ] && exit 1
 
-grep -h $_DATE csv/`echo "${_DATE}" | xargs date "+%Y%m" -d`.csv > $_TMPDATA
+grep -h $_DATE csv/"$1".csv > $_TMPDATA
 [ ! -s "$_TMPDATA" ] && exit 1
 
 f_trace 2 "Begining $0 for day $_DATE :"

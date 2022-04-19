@@ -31,19 +31,21 @@ f_trace 2 "Begining $0"
 _YEAR=`date +%Y`
 
 # Convert XLS data from inverter to CSV
-echo "Conversion des fichiers xls issus de PowerWatch en csv :"
->csv/compute
 cd data && find . -name "${_YEAR}*.xls" > conversion; cd - 1>/dev/null
-while IFS= read -r "_F" ; do
-	_FILE="${_F%.*}"
-	ssconvert -v data/${_FILE}.xls csv/${_FILE}.csv
-	pcregrep -o "(20[2-9][0-9]\-[0-1][0-9])" csv/${_FILE}.csv | uniq | while read _YYYYMM; do
-		echo "$_YYYYMM" >> csv/compute
-		grep -h "$_YYYYMM" csv/"${_FILE}".csv >> csv/${_YYYYMM}.csv || echo "Erreur de génération de csv/${_YYYYMM}.csv !"
-	done
-	[ $? -eq 0 ] && rm csv/${_FILE}.csv || echo "Erreur de suppression de csv/${_FILE}.csv !"
-	[ $? -eq 0 ] && rm data/${_FILE}.xls || echo "Erreur de suppression de data/${_FILE}.xls !"
-done < data/conversion
+if [ -s data/conversion ]; then
+	echo "Conversion des fichiers xls issus de PowerWatch en csv :"
+	>csv/compute
+	while IFS= read -r "_F" ; do
+		_FILE="${_F%.*}"
+		ssconvert -v data/${_FILE}.xls csv/${_FILE}.csv
+		pcregrep -o "(20[2-9][0-9]\-[0-1][0-9])" csv/${_FILE}.csv | uniq | while read _YYYYMM; do
+			echo "$_YYYYMM" >> csv/compute
+			grep -h "$_YYYYMM" csv/"${_FILE}".csv >> csv/${_YYYYMM}.csv || echo "Erreur de génération de csv/${_YYYYMM}.csv !"
+		done
+		[ $? -eq 0 ] && rm csv/${_FILE}.csv || echo "Erreur de suppression de csv/${_FILE}.csv !"
+		[ $? -eq 0 ] && rm data/${_FILE}.xls || echo "Erreur de suppression de data/${_FILE}.xls !"
+	done < data/conversion
+fi
 
 # Data from Enedis
 echo "Conversion des fichiers csv UTF-8 issus d'Enedis en csv ASCII :"
@@ -69,7 +71,7 @@ cat csv/compute | while read _YYYYMM; do
 			./gnuplot_onduleur.sh $_YYYYMM $_DAY &
 			./gnuplot_onduleur_enedis.sh $_YYYYMM $_DAY &
 			./gnuplot_meteo.sh $_DAY &
-			./gnuplot_soleil_meteo.sh $_DAY &
+			./gnuplot_soleil_meteo.sh $_YYYYMM $_DAY &
 		else
 			echo "Day $_DAY not finished."
 		fi
@@ -79,4 +81,4 @@ done
 wait
 
 # Purge
-rm -f data/conversion csv/compute
+rm -f data/conversion
