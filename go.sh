@@ -66,8 +66,7 @@ cat csv/compute | while read _YYYYMM; do
 	while [ ${_DAY//-/$''} -le ${_DAYE//-/$''} ]; do
 		if [ "${_DAY//-/$''}" -lt "$_CURDAY" ]; then
 			echo "Day $_DAY :" 
-			./calculate_onduleur.sh $_YYYYMM $_DAY
-			./calculate_enedis.sh $_DAY
+			./calculate.sh $_YYYYMM $_DAY
 			./gnuplot_onduleur.sh $_YYYYMM $_DAY &
 			./gnuplot_onduleur_enedis.sh $_YYYYMM $_DAY &
 			./gnuplot_meteo.sh $_DAY &

@@ -62,9 +62,9 @@ if [ -f csv/enedis.csv ]; then
 	      sed 's/;/,/g'"
 	eval "$_CMD" 2>/dev/null | grep -v "$_DATE2" | sort -k1 -u > $_TMPDATA2
 else
-	echo "csv/enedis.csv not found !"; exit 1
+	f_trace 1 "csv/enedis.csv not found !"; rm -f $_TMPDATA; exit 1
 fi
-[ ! -s "$_TMPDATA2" ] && rm -f $_TMPDATA2 && exit 1
+[ ! -s "$_TMPDATA2" ] && rm -f $_TMPDATA 2>/dev/null && exit 1
 
 f_trace 2 "Begining $0 For day $_DATE :"
 _FICPNG=gnuplot/${_DATE}.enedis.png

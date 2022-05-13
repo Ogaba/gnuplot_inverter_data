@@ -1,10 +1,10 @@
 #!/bin/bash
 #* h***************************************************************************
-# Generate various data from inverter collected.
+# Generate various data from inverter and enedis collected.
 #
 # Author...... : Olivier Gabathuler
 # Created..... : 2022-03-14 OGA V1.0.0
-# Modified.... : 
+# Modified.... : 2022-05-13 OGA V1.1.0
 # Notes....... :
 #
 # Miscellaneous.
@@ -19,13 +19,14 @@
 # Main
 
 # Version
-VERSION=1.0.0
+VERSION=1.1.0
 
 _NIVEAU_TRACE=1
 _DATE="$2"
 
 # Temporary Data
 _TMPDATA=~/tmp/$0.tmpdata.$$
+_TMPDATA2=~/tmp/$0.tmpdata2.$$
 _TMP=~/tmp/$0.tmp.$$
 
 grep -h "$_DATE" csv/"$1".csv > $_TMPDATA
@@ -33,6 +34,7 @@ grep -h "$_DATE" csv/"$1".csv > $_TMPDATA
 
 f_trace 2 "Begining $0 for day $_DATE :"
 
+#1
 _WP=`awk -F',' '{ print $8 }' $_TMPDATA | tr '\n' '+' | sed 's/+$//' | xargs echo | bc -l`
 echo -en "\tWatts produced by inverter\t : "; echo "$_WP / 60" | bc
 
@@ -62,10 +64,30 @@ else
 	echo "not accurate"
 fi
 
-echo -en "\tWatts consumed from grid\t : "; echo "($_WP - $_WS) / 60" | bc
+_WCG=`echo "($_WP - $_WS) / 60" | bc`
+echo -en "\tWatts consumed from grid\t : "; echo "$_WCG"
+
+#2
+_DATE2=`echo "${_DATE}" | xargs date "+%d/%m/%Y" -d`
+_DATE3=`echo "${_DATE}" | xargs date "+%d\/%m\/%Y" -d`
+
+if [ -f csv/enedis.csv ]; then
+        _CMD="awk -v date=\"$_DATE2\" '/${_DATE3};;/ { print substr(\$0,index(\$0,date)) }' RS='^\n' csv/enedis.csv |\
+	      awk '/${_DATE3};;/ { print \$0 }' RS=''"
+	eval "$_CMD" 2>/dev/null | grep -v "$_DATE2" | sort -k1 -u > $_TMPDATA2
+else
+	f_trace 1 "csv/enedis.csv not found !"
+fi
+
+if [ -s "$_TMPDATA2" ]; then
+	_WE=`awk -F';' '{ print $2 }' $_TMPDATA2 | tr '\n' '+' | sed -e 's/^+//' -e 's/+$//' | xargs echo | bc -l`
+	_WCGE=`echo "$_WE / 2" | bc`
+	echo -en "\tWatts total consumed from grid\t : "; echo "$_WCGE"
+	echo -en "\tWatts consumed by inverter\t : "; echo "$_WCGE - $_WCG" | bc
+fi
 
 # Purge
-rm $_TMP $_TMPDATA 2>/dev/null
+rm $_TMP $_TMPDATA $_TMPDATA2 2>/dev/null
 
 # End
 f_trace 2 "Ending $0"
